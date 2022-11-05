@@ -1,7 +1,6 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const path = require('path');
-const multer = require('multer');
 const logger = require('morgan');
 const fileUpload = require('express-fileupload');
 
@@ -11,8 +10,14 @@ require('dotenv').config();
 const app = express()
 
 app.use(fileUpload({}));
-app.use('/uploads', express.static(process.cwd() + '/uploads'));
+app.use('/uploads', express.static('uploads'));
 const port = process.env.PORT || 5000;
+app.use(cors());
+app.use(express.json());
+
+
+
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rjopapp.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -22,19 +27,38 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 
-app.use(cors());
-app.use(express.json());
+
  
 
 // this for image upload in tinymce
 app.post('/postImage', (req, res) => {
     const sampleFile = req.files.file;
     const filename = `uploads/contentImage/` + Date.now() + `-` + sampleFile.name;
-    sampleFile.mv(path.join(__dirname,  filename));
+    sampleFile.mv(path.join(__dirname, filename));
+    console.log(filename);
     res.status(200).json({
         location: filename
     })
 })
+
+app.post('/thumbnailImage', (req, res) => {
+    console.log(req.files.thumbnailImage);
+    const thumbnailImage = req.files.thumbnailImage;
+    const fileName = `uploads/thumbnailImage/` + Date.now() + `-` + thumbnailImage.name;
+    // thumbnailImage.mv(path.join(__dirname, fileName));
+    console.log(fileName);
+})
+
+
+
+
+
+
+// app.post('/uploadImage', upload.single('image'), (req, res) => {
+//     console.log(req.file);
+//     res.status(200).send(req.file);
+//     // res.status(200).send(req.file);
+// })
 
 
 

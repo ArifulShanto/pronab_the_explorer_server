@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const path = require('path');
 const logger = require('morgan');
 const fileUpload = require('express-fileupload');
@@ -35,18 +35,20 @@ app.post('/postImage', (req, res) => {
     const sampleFile = req.files.file;
     const filename = `uploads/contentImage/` + Date.now() + `-` + sampleFile.name;
     sampleFile.mv(path.join(__dirname, filename));
-    console.log(filename);
+    // console.log(filename);
     res.status(200).json({
-        location: filename
+        location: `http://localhost:5000/` + filename
     })
 })
 
+// this is for thumbnail image upload
+
 app.post('/thumbnailImage', (req, res) => {
-    console.log(req.files.thumbnailImage);
+    // console.log(req.files.thumbnailImage);
     const thumbnailImage = req.files.thumbnailImage;
     const fileName = `uploads/thumbnailImage/` + Date.now() + `-` + thumbnailImage.name;
-    // thumbnailImage.mv(path.join(__dirname, fileName));
-    console.log(fileName);
+    thumbnailImage.mv(path.join(__dirname, fileName));
+    res.status(200).send(`http://localhost:5000/`+fileName);
 })
 
 
@@ -72,10 +74,10 @@ async function run() {
         //add user
 
         app.post('/user/signup/:email', async (req, res) => {
-            console.log(req.body);
+            // console.log(req.body);
             const newUser = await req.body;
             const {email} = req.params;
-            console.log(email);
+            // console.log(email);
             const isUser =await userCollection.findOne({email: email}); 
             if (isUser) {
                 res.send({success : false});
@@ -89,11 +91,11 @@ async function run() {
         //log in user
 
         app.post('/user/login/:email', async(req, res) => {
-            console.log(req.body);
+            // console.log(req.body);
             const { email, password } = req.body;
             const isUser = await userCollection.findOne({ email: email });
             if (isUser) {
-                console.log(isUser);
+                // console.log(isUser);
                 if (isUser.password === password) {
                     res.send({ success: true , name : isUser.name });
                 }
@@ -104,10 +106,32 @@ async function run() {
         })
 
 
-        // this is for add post
+        // this is for adding post
 
         app.post('/addPost', async (req, res) => {
-            console.log(req.body);
+            // console.log(req.body);
+            const newPost = await req.body;
+            // console.log(newPost);
+            const result = await postCollection.insertOne(newPost);
+            res.status(200).send(result);
+        })
+
+
+        //this is for getting post
+
+        app.get('/posts', async (req, res) => {
+            const posts = await postCollection.find().toArray();
+            res.send(posts);
+        })
+
+        //this is for getting single post
+        app.get('/posts/:postId', async (req, res) => {
+            const postId = req.params.postId;
+            // console.log(postId);
+            const objectId = ObjectId(postId);
+            // console.log(objectId);
+            const isPost = await postCollection.findOne({ _id: objectId });
+            res.send(isPost);
         })
     }
     finally {
